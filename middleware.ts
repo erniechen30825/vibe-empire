@@ -1,10 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server"
 
-// Minimal cookie-based auth detection. This works best if Supabase auth cookies are present
-// (e.g., when using auth helpers). Otherwise, consider adding Supabase Auth Helpers.
+// Minimal cookie-based Supabase auth detection.
+// If you later add Supabase Auth Helpers, cookie names will be present automatically.
 function hasSupabaseAuthCookie(req: NextRequest) {
   const cookies = req.cookies.getAll()
-  // Look for any Supabase-auth-related cookie names
   return cookies.some((c) => /sb|supabase/i.test(c.name) && !!c.value)
 }
 
@@ -15,7 +14,7 @@ export function middleware(req: NextRequest) {
   const isPublic = PUBLIC_PATHS.some((re) => re.test(pathname))
   const isAuthed = hasSupabaseAuthCookie(req)
 
-  // If not authed and trying to access a non-public route, redirect to /login
+  // Unauthed trying to access non-public -> /login
   if (!isAuthed && !isPublic) {
     const url = req.nextUrl.clone()
     url.pathname = "/login"
@@ -23,7 +22,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If authed and trying to access /login or /signup, redirect to /missions
+  // Authed visiting /login or /signup -> /missions
   if (isAuthed && (pathname === "/login" || pathname === "/signup")) {
     const url = req.nextUrl.clone()
     url.pathname = "/missions"
@@ -33,7 +32,7 @@ export function middleware(req: NextRequest) {
   return NextResponse.next()
 }
 
-// Match everything except static assets; adjust as needed
+// Avoid intercepting static assets
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|gif|ico|webp|css|js)).*)"],
 }

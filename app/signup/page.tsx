@@ -14,6 +14,7 @@ import { toast } from "sonner"
 export default function SignupPage() {
   const supabase = getSupabaseBrowser()
   const router = useRouter()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -22,32 +23,30 @@ export default function SignupPage() {
     e.preventDefault()
     if (!email || !password) return
     setLoading(true)
-    const { data, error } = await supabase.auth.signUp({ email, password })
-    if (error) {
+
+    const { error: signUpErr } = await supabase.auth.signUp({ email, password })
+    if (signUpErr) {
       setLoading(false)
-      toast.error("Sign up failed", { description: error.message })
+      toast.error("Create account failed", { description: signUpErr.message })
       return
     }
 
-    // Try to sign in immediately after sign up (in case email confirmation is disabled)
-    const { error: signInErr, data: signInData } = await supabase.auth.signInWithPassword({ email, password })
+    // Attempt immediate sign-in (if email confirmation is disabled)
+    const { data: signInData, error: signInErr } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
 
     if (signInErr) {
-      // Account created but sign-in required via email confirmation
       toast.success("Account created", { description: "Please check your email to confirm your account." })
       router.replace("/login")
       return
     }
 
     if (signInData?.session) {
-      toast.success("Account created", { description: "Welcome! Redirecting to your missions..." })
+      toast.success("Account created", { description: "Redirecting to your missions..." })
       router.replace("/missions")
       return
     }
 
-    // Fallback redirect
-    toast("Account created", { description: "Redirecting..." })
     router.replace("/missions")
   }
 
@@ -74,6 +73,7 @@ export default function SignupPage() {
                     required
                   />
                 </div>
+
                 <div className="grid gap-2">
                   <label htmlFor="password" className="text-sm">
                     Password
@@ -87,16 +87,20 @@ export default function SignupPage() {
                     required
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="mt-2 rounded-full bg-brand text-white hover:bg-brand/90"
-                  disabled={loading}
-                  aria-disabled={loading}
-                >
-                  {loading ? "Creating..." : "Create account"}
-                </Button>
+
+                <div className="mt-2 flex justify-center">
+                  <Button
+                    type="submit"
+                    className="rounded-full bg-brand text-white hover:bg-brand/90"
+                    disabled={loading}
+                    aria-disabled={loading}
+                  >
+                    {loading ? "Creating..." : "Create account"}
+                  </Button>
+                </div>
               </form>
-              <div className="mt-4 text-sm text-muted-foreground">
+
+              <div className="mt-4 text-center text-sm text-muted-foreground">
                 {"Already have an account? "}
                 <Link className="text-brand underline-offset-4 hover:underline" href="/login">
                   Sign in

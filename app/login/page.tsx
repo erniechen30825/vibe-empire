@@ -14,6 +14,7 @@ import { toast } from "sonner"
 export default function LoginPage() {
   const supabase = getSupabaseBrowser()
   const router = useRouter()
+
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -29,7 +30,8 @@ export default function LoginPage() {
       toast.error("Sign in failed", { description: error.message })
       return
     }
-    if (data.session) {
+
+    if (data?.session) {
       toast.success("Welcome back!", { description: "Redirecting to your missions..." })
       router.replace("/missions")
     } else {
@@ -61,6 +63,7 @@ export default function LoginPage() {
                     required
                   />
                 </div>
+
                 <div className="grid gap-2">
                   <label htmlFor="password" className="text-sm">
                     Password
@@ -74,6 +77,7 @@ export default function LoginPage() {
                     required
                   />
                 </div>
+
                 <div className="mt-2 flex justify-center">
                   <Button
                     type="submit"
@@ -85,7 +89,8 @@ export default function LoginPage() {
                   </Button>
                 </div>
               </form>
-              <div className="mt-4 text-sm text-muted-foreground">
+
+              <div className="mt-4 text-center text-sm text-muted-foreground">
                 {"Don't have an account? "}
                 <Link className="text-brand underline-offset-4 hover:underline" href="/signup">
                   Create one
