@@ -1,31 +1,45 @@
-import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
-import './globals.css'
+import type { Metadata } from "next";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import "./globals.css";
+
+import Header from "@/components/header";
+import { QueryProvider } from "@/components/query-provider";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/toaster";
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.dev',
-}
+  title: "Empire",
+  description: "Personal growth planner",
+  generator: "v0.dev",
+};
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
         <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
+          html {
+            font-family: ${GeistSans.style.fontFamily};
+            --font-sans: ${GeistSans.variable};
+            --font-mono: ${GeistMono.variable};
+          }
         `}</style>
       </head>
-      <body>{children}</body>
+      {/* light sand backdrop, ink text by default */}
+      <body className="min-h-screen bg-sand/20 text-ink antialiased">
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <QueryProvider>
+            {/* top border accent using brand; subtle */}
+            <div className="h-1 w-full bg-brand" />
+            <Header />
+            <main className="mx-auto max-w-6xl px-4 py-6">
+              {children}
+            </main>
+          </QueryProvider>
+          <Toaster />
+        </ThemeProvider>
+      </body>
     </html>
-  )
+  );
 }
