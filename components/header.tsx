@@ -7,12 +7,14 @@ import { useSupabaseUser } from "@/hooks/use-supabase-user"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Leaf, Sparkles } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 const dmSerif = DM_Serif_Display({ subsets: ["latin"], weight: "400" })
 
 export default function Header() {
   const { user } = useSupabaseUser()
   const supabase = getSupabaseBrowser()
+  const router = useRouter()
 
   const initials = user?.email?.slice(0, 2).toUpperCase() ?? "EM"
 
@@ -52,9 +54,8 @@ export default function Header() {
           ) : (
             <Button
               className="rounded-full bg-emerald-600 hover:bg-emerald-700 text-white"
-              onClick={async () => {
-                // This will open the hosted auth page if OAuth providers are configured in Supabase
-                await supabase.auth.signInWithOAuth({ provider: "github" })
+              onClick={() => {
+                router.push("/login")
               }}
             >
               Sign in
