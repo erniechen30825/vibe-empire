@@ -74,14 +74,16 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-                <Button
-                  type="submit"
-                  className="mt-2 rounded-full bg-brand text-white hover:bg-brand/90"
-                  disabled={loading}
-                  aria-disabled={loading}
-                >
-                  {loading ? "Signing in..." : "Sign in"}
-                </Button>
+                <div className="mt-2 flex justify-center">
+                  <Button
+                    type="submit"
+                    className="rounded-full bg-brand text-white hover:bg-brand/90"
+                    disabled={loading}
+                    aria-disabled={loading}
+                  >
+                    {loading ? "Signing in..." : "Sign in"}
+                  </Button>
+                </div>
               </form>
               <div className="mt-4 text-sm text-muted-foreground">
                 {"Don't have an account? "}
