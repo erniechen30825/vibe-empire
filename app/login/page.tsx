@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { getSupabaseBrowser } from "@/lib/supabase-browser"
@@ -18,6 +17,30 @@ export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    let ignore = false
+
+    // Immediate session check
+    supabase.auth.getSession().then(({ data }) => {
+      if (ignore) return
+      if (data.session) {
+        router.replace("/missions")
+      }
+    })
+
+    // Listen for auth changes (e.g., post-login)
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        router.replace("/missions")
+      }
+    })
+
+    return () => {
+      ignore = true
+      sub.subscription?.unsubscribe()
+    }
+  }, [router, supabase])
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -81,7 +104,7 @@ export default function LoginPage() {
                 <div className="mt-2 flex justify-center">
                   <Button
                     type="submit"
-                    className="rounded-full bg-brand text-white hover:bg-brand/90"
+                    className="rounded-full bg-mint hover:bg-mint/80 text-ink"
                     disabled={loading}
                     aria-disabled={loading}
                   >
