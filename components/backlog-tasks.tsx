@@ -40,7 +40,6 @@ export default function BacklogTasks() {
         .select("id,user_id,goal_id,title,due_date,estimated_hours,status,importance")
         .eq("user_id", user.id)
         .is("due_date", null) // Backlog rule
-        .neq("status", "archived" as any)
         .order("created_at", { ascending: false })
       if (error) throw error
       return (data as Task[]) ?? []
