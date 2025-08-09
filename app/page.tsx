@@ -1,6 +1,5 @@
 import { Suspense } from "react"
 import { QueryProvider } from "@/components/query-provider"
-import Header from "@/components/header"
 import PointsLevel from "@/components/points-level"
 import TodayMissions from "@/components/today-missions"
 import BacklogTasks from "@/components/backlog-tasks"
@@ -16,7 +15,6 @@ export default function Page() {
     <div className={`${inter.variable} ${dmSerif.variable} font-sans`}>
       <QueryProvider>
         <main className="min-h-dvh bg-gradient-to-b from-emerald-50 to-white">
-          <Header />
           <div className="container mx-auto px-4 py-6 md:py-10 grid gap-6 md:gap-8">
             <section aria-label="Level and Points">
               <Suspense
