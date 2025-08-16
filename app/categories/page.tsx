@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { CategoryForm } from "@/components/categories/category-form"
 import { CategoryRow } from "@/components/categories/category-row"
 import { toast } from "sonner"
 import { Plus, FolderOpen } from "lucide-react"
+import { useRequireAuth } from "@/hooks/use-require-auth"
 
 interface Category {
   id: string
@@ -25,32 +26,15 @@ interface CategoriesData {
   children: Record<string, Category[]>
 }
 
+export const dynamic = "force-dynamic"
+
 export default function CategoriesPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const [isAuthChecking, setIsAuthChecking] = useState(true)
+  const { user, loading: authLoading } = useRequireAuth()
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [prefilledParentId, setPrefilledParentId] = useState<string | null>(null)
-
-  // Auth check
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = getSupabaseBrowser()
-      const {
-        data: { session },
-      } = await supabase.auth.getSession()
-
-      if (!session) {
-        router.push("/login")
-        return
-      }
-
-      setIsAuthChecking(false)
-    }
-
-    checkAuth()
-  }, [router])
 
   // Fetch categories
   const {
@@ -82,7 +66,7 @@ export default function CategoriesPage() {
 
       return { parents, children }
     },
-    enabled: !isAuthChecking,
+    enabled: !!user,
   })
 
   // Delete mutation
@@ -128,7 +112,7 @@ export default function CategoriesPage() {
     setPrefilledParentId(null)
   }
 
-  if (isAuthChecking) {
+  if (authLoading) {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-center min-h-[200px]">

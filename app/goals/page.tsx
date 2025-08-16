@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { getSupabaseBrowser } from "@/lib/supabase-browser"
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner"
 import { MoreVertical, Target, CheckCircle2 } from "lucide-react"
 import GoalForm from "@/components/goals/goal-form"
+import useRequireAuth from "@/hooks/useRequireAuth"
 
 export const dynamic = "force-dynamic"
 
@@ -42,25 +43,10 @@ export default function GoalsPage() {
   const router = useRouter()
   const supabase = getSupabaseBrowser()
   const qc = useQueryClient()
+  const { user, loading: authLoading } = useRequireAuth()
 
-  const [authChecking, setAuthChecking] = useState(true)
   const [openForm, setOpenForm] = useState(false)
   const [editGoalId, setEditGoalId] = useState<string | null>(null)
-
-  useEffect(() => {
-    let mounted = true
-    supabase.auth.getSession().then(({ data }) => {
-      if (!mounted) return
-      if (!data.session) {
-        router.push("/login")
-      } else {
-        setAuthChecking(false)
-      }
-    })
-    return () => {
-      mounted = false
-    }
-  }, [router, supabase])
 
   const goalsQuery = useQuery({
     queryKey: ["goals"],
@@ -74,7 +60,7 @@ export default function GoalsPage() {
       if (error) throw error
       return (data as Goal[]) ?? []
     },
-    enabled: !authChecking,
+    enabled: !!user,
   })
 
   const categoriesQuery = useQuery({
@@ -87,7 +73,7 @@ export default function GoalsPage() {
       if (error) throw error
       return (data as Category[]) ?? []
     },
-    enabled: !authChecking,
+    enabled: !!user,
   })
 
   const markCompleted = useMutation({
@@ -142,7 +128,7 @@ export default function GoalsPage() {
     return parent ? `${parent.name} ▸ ${child.name}` : child.name
   }
 
-  if (authChecking) {
+  if (authLoading) {
     return (
       <main className="min-h-dvh bg-gradient-to-b from-emerald-50/50 to-white">
         <div className="container mx-auto px-4 py-6">

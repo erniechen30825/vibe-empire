@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { CheckCircle, XCircle, User, Database, Settings } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 type TestResult = {
   step: string
   status: "pending" | "success" | "error"
