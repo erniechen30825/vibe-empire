@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { toast } from "sonner"
-import { MoreVertical } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
+import { MoreVertical, Target, CheckCircle2 } from "lucide-react"
 import GoalForm from "@/components/goals/goal-form"
 
 export const dynamic = "force-dynamic"
@@ -26,7 +26,7 @@ type Goal = {
   type: "progressive" | "habitual"
   importance: number | null
   effort_estimate_hours: number | null
-  status: "active" | "completed" | "archived" | string
+  status: "active" | "completed"
   created_at: string
   updated_at: string
 }
@@ -92,17 +92,30 @@ export default function GoalsPage() {
 
   const markCompleted = useMutation({
     mutationFn: async (goalId: string) => {
-      const { error } = await supabase.from("goals").update({ status: "completed" }).eq("id", goalId)
+      const { error } = await supabase
+        .from("goals")
+        .update({ status: "completed", updated_at: new Date().toISOString() })
+        .eq("id", goalId)
       if (error) throw error
+
       // Optional: write to points_ledger (stub)
-      // await supabase.from("points_ledger").insert({ user_id: ..., points: 50, reason: "goal_completed" })
+      // const { data: session } = await supabase.auth.getSession()
+      // if (session?.user) {
+      //   await supabase.from("points_ledger").insert({
+      //     user_id: session.user.id,
+      //     points: 50,
+      //     reason: "goal_completed"
+      //   })
+      // }
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["goals"] })
-      toast.success("Goal marked as completed")
+      toast.success("Goal marked as completed!")
     },
     onError: (err: any) => {
-      toast.error("Failed to mark goal completed", { description: err?.message ?? "Please try again." })
+      toast.error("Failed to mark goal completed", {
+        description: err?.message ?? "Please try again.",
+      })
     },
   })
 
@@ -135,23 +148,19 @@ export default function GoalsPage() {
         <div className="container mx-auto px-4 py-6">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-semibold text-ink">Goals</h1>
-            <Skeleton className="h-9 w-28" />
+            <Skeleton className="h-9 w-28 rounded-full" />
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <Card className="rounded-2xl">
-              <CardContent className="p-6">
-                <Skeleton className="h-6 w-2/3" />
-                <Skeleton className="mt-3 h-4 w-1/3" />
-                <Skeleton className="mt-5 h-10 w-28" />
-              </CardContent>
-            </Card>
-            <Card className="rounded-2xl">
-              <CardContent className="p-6">
-                <Skeleton className="h-6 w-2/3" />
-                <Skeleton className="mt-3 h-4 w-1/3" />
-                <Skeleton className="mt-5 h-10 w-28" />
-              </CardContent>
-            </Card>
+          <Separator className="my-6" />
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="rounded-2xl">
+                <CardContent className="p-6">
+                  <Skeleton className="h-6 w-2/3" />
+                  <Skeleton className="mt-3 h-4 w-1/3" />
+                  <Skeleton className="mt-5 h-10 w-28" />
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </main>
@@ -162,52 +171,52 @@ export default function GoalsPage() {
     <main className="min-h-dvh bg-gradient-to-b from-emerald-50/50 to-white">
       <div className="container mx-auto px-4 py-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold text-ink">Goals</h1>
-          <Button className="rounded-full bg-mint text-ink hover:bg-mint/80" onClick={onCreate}>
+          <div className="flex items-center gap-3">
+            <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-brand/20 text-brand">
+              <Target className="size-5" />
+            </div>
+            <h1 className="text-2xl font-semibold text-ink">Goals</h1>
+          </div>
+          <Button
+            className="rounded-full bg-mint text-ink hover:bg-mint/80 focus-visible:ring-mint/40"
+            onClick={onCreate}
+          >
             New Goal
           </Button>
         </div>
 
         <Separator className="my-6" />
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {goalsQuery.isLoading ? (
             <>
-              <Card className="rounded-2xl">
-                <CardContent className="p-6">
-                  <Skeleton className="h-6 w-2/3" />
-                  <Skeleton className="mt-3 h-4 w-1/3" />
-                  <Skeleton className="mt-5 h-10 w-28" />
-                </CardContent>
-              </Card>
-              <Card className="rounded-2xl">
-                <CardContent className="p-6">
-                  <Skeleton className="h-6 w-2/3" />
-                  <Skeleton className="mt-3 h-4 w-1/3" />
-                  <Skeleton className="mt-5 h-10 w-28" />
-                </CardContent>
-              </Card>
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="rounded-2xl">
+                  <CardContent className="p-6">
+                    <Skeleton className="h-6 w-2/3" />
+                    <Skeleton className="mt-3 h-4 w-1/3" />
+                    <Skeleton className="mt-5 h-10 w-28" />
+                  </CardContent>
+                </Card>
+              ))}
             </>
           ) : goalsQuery.data && goalsQuery.data.length > 0 ? (
-            goalsQuery.data
-              // Optionally hide archived if present in schema
-              .filter((g) => g.status === "active" || g.status === "completed")
-              .map((g) => (
-                <GoalCard
-                  key={g.id}
-                  goal={g}
-                  categoryPath={getCategoryPath(g.category_id)}
-                  onEdit={() => onEdit(g.id)}
-                  onMarkCompleted={() => markCompleted.mutate(g.id)}
-                />
-              ))
+            goalsQuery.data.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                goal={goal}
+                categoryPath={getCategoryPath(goal.category_id)}
+                onEdit={() => onEdit(goal.id)}
+                onMarkCompleted={() => markCompleted.mutate(goal.id)}
+              />
+            ))
           ) : (
-            <Card className="rounded-2xl">
+            <Card className="rounded-2xl col-span-full">
               <CardHeader>
-                <CardTitle>No goals yet</CardTitle>
+                <CardTitle className="text-ink">No goals yet</CardTitle>
               </CardHeader>
               <CardContent className="text-sm text-ink/70">
-                Create your first goal to start tracking progress and habits.
+                Create your first goal to start tracking progress and building habits.
               </CardContent>
             </Card>
           )}
@@ -215,9 +224,9 @@ export default function GoalsPage() {
       </div>
 
       <Dialog open={openForm} onOpenChange={setOpenForm}>
-        <DialogContent className="max-w-2xl rounded-2xl">
+        <DialogContent className="max-w-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editGoalId ? "Edit Goal" : "New Goal"}</DialogTitle>
+            <DialogTitle className="text-ink">{editGoalId ? "Edit Goal" : "New Goal"}</DialogTitle>
           </DialogHeader>
           <GoalForm
             mode={editGoalId ? "edit" : "create"}
@@ -225,7 +234,6 @@ export default function GoalsPage() {
             onClose={() => {
               setOpenForm(false)
               setEditGoalId(null)
-              qc.invalidateQueries({ queryKey: ["goals"] })
             }}
           />
         </DialogContent>
@@ -253,11 +261,9 @@ function GoalCard({
     queryFn: async () => {
       const { data, error } = await supabase
         .from("milestones")
-        .select("*")
+        .select("id,title,target_date,order_index,is_completed")
         .eq("goal_id", goal.id)
-        .order("order_index", {
-          ascending: true,
-        })
+        .order("order_index", { ascending: true })
       if (error) throw error
       return data ?? []
     },
@@ -268,7 +274,11 @@ function GoalCard({
   const { data: habitPlan } = useQuery({
     queryKey: ["habit_plans", goal.id],
     queryFn: async () => {
-      const { data, error } = await supabase.from("habit_plans").select("*").eq("goal_id", goal.id).maybeSingle()
+      const { data, error } = await supabase
+        .from("habit_plans")
+        .select("id,frequency,times_per_week")
+        .eq("goal_id", goal.id)
+        .maybeSingle()
       if (error) throw error
       return data ?? null
     },
@@ -277,9 +287,21 @@ function GoalCard({
 
   const typeBadge =
     goal.type === "progressive" ? (
-      <Badge className="rounded-full bg-brand text-ink">progressive</Badge>
+      <Badge className="rounded-full bg-brand/20 text-brand hover:bg-brand/30">progressive</Badge>
     ) : (
-      <Badge className="rounded-full bg-mint text-ink">habitual</Badge>
+      <Badge className="rounded-full bg-mint/60 text-ink hover:bg-mint/80">habitual</Badge>
+    )
+
+  const statusBadge =
+    goal.status === "completed" ? (
+      <Badge className="rounded-full bg-mint/60 text-ink">
+        <CheckCircle2 className="mr-1 size-3" />
+        completed
+      </Badge>
+    ) : (
+      <Badge variant="outline" className="rounded-full border-brand/40 text-brand">
+        active
+      </Badge>
     )
 
   const importance = goal.importance ?? 3
@@ -289,51 +311,38 @@ function GoalCard({
     const total = milestones?.length ?? 0
     const completed = (milestones ?? []).filter((m: any) => m.is_completed === true).length
     secondary = `${completed}/${total} milestones`
-  } else {
-    // Support either new (frequency/times_per_week) or legacy (period/times_per_period) schema
-    const p: any = habitPlan
-    if (p?.frequency) {
-      if (p.frequency === "times_per_week") {
-        secondary = `${p.times_per_week ?? 0}×/week`
-      } else if (p.frequency === "daily") {
-        secondary = "daily"
-      } else if (p.frequency === "weekly") {
-        secondary = "weekly"
-      }
-    } else if (p?.period) {
-      if (p.period === "day") {
-        secondary = "daily"
-      } else if (p.period === "week") {
-        const n = p.times_per_period ?? 0
-        secondary = n ? `${n}×/week` : "weekly"
-      }
+  } else if (goal.type === "habitual" && habitPlan) {
+    const hp: any = habitPlan
+    if (hp.frequency === "daily") {
+      secondary = "Daily"
+    } else if (hp.frequency === "weekly") {
+      secondary = "Weekly"
+    } else if (hp.frequency === "times_per_week") {
+      secondary = `${hp.times_per_week ?? 1}×/week`
     }
   }
 
   return (
-    <Card className="rounded-2xl shadow-sm">
-      <CardHeader className="pb-2">
+    <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-lg font-semibold">{goal.title}</CardTitle>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <CardTitle className="text-lg font-semibold text-ink truncate">{goal.title}</CardTitle>
               {typeBadge}
-              <Badge variant="secondary" className="rounded-full bg-sand/60 text-ink">
+            </div>
+            <div className="mt-2 flex items-center gap-2 flex-wrap">
+              <Badge variant="secondary" className="rounded-full bg-sand/60 text-ink text-xs">
                 Importance {importance}
               </Badge>
-              <Badge
-                variant="outline"
-                className={`rounded-full ${goal.status === "completed" ? "bg-mint/60 text-ink" : "bg-brand/20 text-ink"}`}
-              >
-                {goal.status}
-              </Badge>
+              {statusBadge}
             </div>
             <div className="mt-1 text-xs text-ink/70">{categoryPath}</div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <MoreVertical />
+              <Button variant="ghost" size="icon" className="rounded-full shrink-0">
+                <MoreVertical className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="rounded-xl">
@@ -346,8 +355,11 @@ function GoalCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {goal.description ? <div className="text-sm text-ink/80">{goal.description}</div> : null}
-        {secondary ? <div className="mt-2 text-xs text-ink/70">{secondary}</div> : null}
+        {goal.description && <div className="text-sm text-ink/80 mb-3 line-clamp-2">{goal.description}</div>}
+        {secondary && <div className="text-xs text-ink/70 font-medium">{secondary}</div>}
+        {goal.effort_estimate_hours && (
+          <div className="text-xs text-ink/70 mt-1">Est. {goal.effort_estimate_hours}h effort</div>
+        )}
       </CardContent>
     </Card>
   )
