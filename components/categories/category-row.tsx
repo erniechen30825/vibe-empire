@@ -2,8 +2,8 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Folder, FolderOpen, Edit, Trash2, Plus } from "lucide-react"
-import { useState } from "react"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { MoreVertical, Folder, FolderOpen, Plus } from "lucide-react"
 
 interface Category {
   id: string
@@ -31,63 +31,53 @@ export function CategoryRow({
   onAddSubcategory,
   isDeleting,
 }: CategoryRowProps) {
-  const [showActions, setShowActions] = useState(false)
-
   return (
-    <div
-      className="flex items-center justify-between p-3 rounded-lg hover:bg-sand/20 transition-colors group"
-      onMouseEnter={() => setShowActions(true)}
-      onMouseLeave={() => setShowActions(false)}
-    >
+    <div className="flex items-center justify-between p-3 rounded-xl hover:bg-sand/10 transition-colors group">
       <div className="flex items-center gap-3">
-        {isParent ? <FolderOpen className="w-5 h-5 text-brand" /> : <Folder className="w-4 h-4 text-mint" />}
+        {isParent ? <FolderOpen className="w-5 h-5 text-brand" /> : <Folder className="w-4 h-4 text-mint ml-1" />}
 
         <div className="flex items-center gap-2">
-          <span className="font-medium text-ink">{category.name}</span>
+          <span className={`font-medium text-ink ${isParent ? "text-base" : "text-sm"}`}>{category.name}</span>
+
           {isParent && subcategoryCount > 0 && (
-            <Badge variant="secondary" className="bg-sand text-ink text-xs">
+            <Badge variant="secondary" className="bg-sand/60 text-ink text-xs">
               {subcategoryCount} subcategories
             </Badge>
           )}
         </div>
       </div>
 
-      {/* Actions */}
-      <div
-        className={`flex items-center gap-1 transition-opacity ${showActions ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-      >
+      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {isParent && onAddSubcategory && (
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onAddSubcategory(category.id)}
-            className="h-8 px-2 hover:bg-mint/20 text-ink"
-            title="Add subcategory"
+            className="rounded-full text-brand hover:bg-brand/10"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
+            Add subcategory
           </Button>
         )}
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onEdit(category)}
-          className="h-8 px-2 hover:bg-brand/20 text-ink"
-          title="Edit"
-        >
-          <Edit className="w-4 h-4" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => onDelete(category.id)}
-          disabled={isDeleting}
-          className="h-8 px-2 hover:bg-red-100 text-ink hover:text-red-600"
-          title="Delete"
-        >
-          <Trash2 className="w-4 h-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="rounded-full" disabled={isDeleting}>
+              <MoreVertical className="w-4 h-4" />
+              <span className="sr-only">Category actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="rounded-xl">
+            <DropdownMenuItem onClick={() => onEdit(category)}>Edit</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => onDelete(category.id)}
+              className="text-red-600 focus:text-red-600"
+              disabled={isDeleting}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   )
