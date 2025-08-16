@@ -15,6 +15,8 @@ import { MoreVertical } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import GoalForm from "@/components/goals/goal-form"
 
+export const dynamic = "force-dynamic"
+
 type Goal = {
   id: string
   user_id: string
