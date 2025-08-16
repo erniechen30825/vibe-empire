@@ -1,188 +1,194 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { getSupabaseBrowser } from "@/lib/supabase-browser"
-import { Input } from "@/components/ui/input"
+import type React from "react"
+
+import { useState } from "react"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { getSupabaseBrowser } from "@/lib/supabase-browser"
 import { toast } from "sonner"
+import { X } from "lucide-react"
 
-type Mode = "create" | "edit"
-
-type Category = {
+interface Category {
   id: string
-  user_id: string
   name: string
   parent_id: string | null
-  created_at?: string
+  created_at: string
 }
 
-export default function CategoryForm({
-  mode,
-  categoryId,
-  onClose,
-}: {
-  mode: Mode
-  categoryId?: string
+interface CategoryFormProps {
+  mode: "create" | "edit"
+  category?: Category
+  prefilledParentId?: string | null
+  availableParents: Category[]
   onClose: () => void
-}) {
-  const supabase = getSupabaseBrowser()
-  const qc = useQueryClient()
+}
 
-  const [name, setName] = useState("")
-  const [parentId, setParentId] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
+export function CategoryForm({ mode, category, prefilledParentId, availableParents, onClose }: CategoryFormProps) {
+  const queryClient = useQueryClient()
+  const [name, setName] = useState(category?.name || "")
+  const [parentId, setParentId] = useState<string | null>(prefilledParentId || category?.parent_id || null)
 
-  const categoriesQuery = useQuery({
-    queryKey: ["categories"],
-    queryFn: async (): Promise<Category[]> => {
-      const { data, error } = await supabase
-        .from("categories")
-        .select("id,user_id,name,parent_id,created_at")
-        .order("name", { ascending: true })
-      if (error) throw error
-      return (data as Category[]) ?? []
-    },
-  })
+  // Create mutation
+  const createMutation = useMutation({
+    mutationFn: async ({ name, parentId }: { name: string; parentId: string | null }) => {
+      const supabase = getSupabaseBrowser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
-  // Load existing category data in edit mode
-  const categoryQuery = useQuery({
-    queryKey: ["categories", categoryId],
-    queryFn: async (): Promise<Category | null> => {
-      if (!categoryId) return null
-      const { data, error } = await supabase
-        .from("categories")
-        .select("id,user_id,name,parent_id,created_at")
-        .eq("id", categoryId)
-        .maybeSingle()
-      if (error) throw error
-      return (data as Category) ?? null
-    },
-    enabled: mode === "edit" && !!categoryId,
-  })
+      if (!user) throw new Error("Not authenticated")
 
-  // Populate form when editing
-  useEffect(() => {
-    if (mode === "edit" && categoryQuery.data) {
-      const category = categoryQuery.data
-      setName(category.name ?? "")
-      setParentId(category.parent_id ?? null)
-    }
-  }, [mode, categoryQuery.data])
-
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!name.trim()) {
-        throw new Error("Category name is required")
-      }
-
-      // Check for duplicate names at the same level
-      const { data: existing } = await supabase
-        .from("categories")
-        .select("id")
-        .eq("name", name.trim())
-        .eq("parent_id", parentId || null)
-        .neq("id", categoryId || "")
-        .limit(1)
-
-      if (existing && existing.length > 0) {
-        throw new Error("A category with this name already exists at this level")
-      }
-
-      const categoryData = {
+      const { error } = await supabase.from("categories").insert({
+        user_id: user.id,
         name: name.trim(),
-        parent_id: parentId || null,
-      }
+        parent_id: parentId === "none" ? null : parentId,
+      })
 
-      if (mode === "create") {
-        const { error } = await supabase.from("categories").insert(categoryData)
-        if (error) throw error
-      } else if (mode === "edit" && categoryId) {
-        const { error } = await supabase.from("categories").update(categoryData).eq("id", categoryId)
-        if (error) throw error
-      }
+      if (error) throw error
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["categories"] })
-      toast.success(mode === "create" ? "Category created!" : "Category updated!")
+      toast.success("Category created")
+      queryClient.invalidateQueries({ queryKey: ["categories"] })
       onClose()
     },
-    onError: (err: any) => {
-      toast.error("Save failed", {
-        description: err?.message ?? "Please check your inputs and try again.",
-      })
+    onError: (error: any) => {
+      if (error.code === "23505") {
+        toast.error("A category with this name already exists under this parent")
+      } else {
+        toast.error("Failed to create category")
+      }
     },
   })
 
-  const handleSave = () => {
-    setPending(true)
-    saveMutation.mutate()
-    setPending(false)
-  }
+  // Update mutation
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, name, parentId }: { id: string; name: string; parentId: string | null }) => {
+      const supabase = getSupabaseBrowser()
+      const { error } = await supabase
+        .from("categories")
+        .update({
+          name: name.trim(),
+          parent_id: parentId === "none" ? null : parentId,
+        })
+        .eq("id", id)
 
-  // Get available parent categories (exclude current category and its descendants in edit mode)
-  const availableParents = (categoriesQuery.data ?? []).filter((cat) => {
-    // Only show parent categories (no parent_id)
-    if (cat.parent_id !== null) return false
-
-    // In edit mode, exclude the current category to prevent circular references
-    if (mode === "edit" && categoryId === cat.id) return false
-
-    return true
+      if (error) throw error
+    },
+    onSuccess: () => {
+      toast.success("Category updated")
+      queryClient.invalidateQueries({ queryKey: ["categories"] })
+      onClose()
+    },
+    onError: (error: any) => {
+      if (error.code === "23505") {
+        toast.error("A category with this name already exists under this parent")
+      } else {
+        toast.error("Failed to update category")
+      }
+    },
   })
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!name.trim()) {
+      toast.error("Category name is required")
+      return
+    }
+
+    if (mode === "create") {
+      createMutation.mutate({ name, parentId })
+    } else if (category) {
+      updateMutation.mutate({ id: category.id, name, parentId })
+    }
+  }
+
+  const isPending = createMutation.isPending || updateMutation.isPending
+  const isParentCategory = category && !category.parent_id
+
+  // Filter out the current category from available parents to prevent circular references
+  const filteredParents = availableParents.filter((parent) => parent.id !== category?.id)
+
   return (
-    <div className="grid gap-4">
-      {/* Name */}
-      <div className="grid gap-2">
-        <label htmlFor="category-name" className="text-sm font-medium text-ink">
-          Name *
-        </label>
-        <Input
-          id="category-name"
-          placeholder="e.g., Work, Personal, Health"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="focus-visible:ring-brand/40"
-          required
-        />
-      </div>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-md rounded-2xl border border-ink/10 bg-white">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-ink">{mode === "create" ? "New Category" : "Edit Category"}</CardTitle>
+          <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0 hover:bg-ink/5">
+            <X className="h-4 w-4" />
+          </Button>
+        </CardHeader>
 
-      {/* Parent Category */}
-      <div className="grid gap-2">
-        <label className="text-sm font-medium text-ink">Parent Category</label>
-        <Select value={parentId ?? "none"} onValueChange={(value) => setParentId(value === "none" ? null : value)}>
-          <SelectTrigger className="focus:ring-brand/40">
-            <SelectValue placeholder="None (top-level category)" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="none">None (top-level category)</SelectItem>
-            {availableParents.map((parent) => (
-              <SelectItem key={parent.id} value={parent.id}>
-                {parent.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-ink/60">
-          Leave empty to create a top-level category, or select a parent to create a subcategory.
-        </p>
-      </div>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Name Field */}
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium text-ink">
+                Name *
+              </label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter category name"
+                className="focus-visible:ring-brand/40"
+                disabled={isPending}
+                required
+              />
+            </div>
 
-      {/* Actions */}
-      <div className="flex items-center justify-end gap-3 pt-4">
-        <Button variant="ghost" className="rounded-full" onClick={onClose} disabled={pending}>
-          Cancel
-        </Button>
-        <Button
-          className="rounded-full bg-brand text-white hover:bg-brand/90 focus-visible:ring-brand/40"
-          onClick={handleSave}
-          disabled={pending || !name.trim()}
-        >
-          {pending ? "Saving..." : mode === "create" ? "Create Category" : "Save Changes"}
-        </Button>
-      </div>
+            {/* Parent Selection */}
+            <div className="space-y-2">
+              <label htmlFor="parent" className="text-sm font-medium text-ink">
+                Parent Category
+              </label>
+              <select
+                id="parent"
+                value={parentId || "none"}
+                onChange={(e) => setParentId(e.target.value === "none" ? null : e.target.value)}
+                className="w-full px-3 py-2 border border-ink/20 rounded-md bg-white text-ink focus:outline-none focus:ring-2 focus:ring-brand/40 focus:border-transparent"
+                disabled={isPending || (prefilledParentId && mode === "create")}
+              >
+                <option value="none">None (Top-level category)</option>
+                {filteredParents.map((parent) => (
+                  <option key={parent.id} value={parent.id}>
+                    {parent.name}
+                  </option>
+                ))}
+              </select>
+              {prefilledParentId && mode === "create" && (
+                <p className="text-xs text-ink/60">Creating subcategory under selected parent</p>
+              )}
+              {isParentCategory && mode === "edit" && (
+                <p className="text-xs text-ink/60">Parent categories cannot be moved under other categories</p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isPending}
+                className="flex-1 bg-transparent"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={isPending || !name.trim()}
+                className="flex-1 bg-brand hover:bg-brand/90 text-white"
+              >
+                {isPending ? "Saving..." : mode === "create" ? "Create" : "Update"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }
