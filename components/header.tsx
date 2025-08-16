@@ -20,8 +20,11 @@ const navLinks = [
   { href: "/missions", label: "Missions" },
   { href: "/goals", label: "Goals" },
   { href: "/categories", label: "Categories" },
+  { href: "/long-term", label: "Long-Term" },
   { href: "/progress", label: "Progress" },
   { href: "/settings", label: "Settings" },
+  // Add test page for development
+  { href: "/test-signup", label: "Test Signup", dev: true },
 ]
 
 export default function Header() {
@@ -49,9 +52,17 @@ export default function Header() {
     return pathname.startsWith(href)
   }
 
+  // Filter dev links in production
+  const filteredNavLinks = navLinks.filter((link) => {
+    if (link.dev && process.env.NODE_ENV === "production") {
+      return false
+    }
+    return true
+  })
+
   const NavLinks = ({ mobile = false, onLinkClick }: { mobile?: boolean; onLinkClick?: () => void }) => (
     <nav className={`flex ${mobile ? "flex-col space-y-2" : "items-center gap-2"}`}>
-      {navLinks.map((link) => {
+      {filteredNavLinks.map((link) => {
         const isActive = isActiveLink(link.href)
         return (
           <Link key={link.href} href={link.href} onClick={onLinkClick}>
@@ -60,7 +71,7 @@ export default function Header() {
               size="sm"
               className={`rounded-full transition-colors ${
                 isActive ? "bg-brand text-white hover:bg-brand/90" : "text-ink hover:text-ink hover:bg-ink/5"
-              } ${mobile ? "w-full justify-start" : ""}`}
+              } ${mobile ? "w-full justify-start" : ""} ${link.dev ? "opacity-60" : ""}`}
             >
               {link.label}
             </Button>
