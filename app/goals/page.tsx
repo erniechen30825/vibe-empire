@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner"
 import { MoreVertical, Target, CheckCircle2 } from "lucide-react"
 import GoalForm from "@/components/goals/goal-form"
-import useRequireAuth from "@/hooks/useRequireAuth"
+import { useRequireAuth } from "@/hooks/use-require-auth"
 
 export const dynamic = "force-dynamic"
 
