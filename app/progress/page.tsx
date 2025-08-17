@@ -26,6 +26,8 @@ type UserStats = {
   current_streak: number
 }
 
+export const dynamic = "force-dynamic"
+
 export default function ProgressPage() {
   const { user, loading: authLoading } = useRequireAuth()
 
