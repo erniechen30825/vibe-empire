@@ -41,6 +41,7 @@ export default function LongTermPage() {
   const { data: longTerms, isLoading } = useQuery({
     queryKey: ["long-terms", user?.id],
     queryFn: async (): Promise<LongTerm[]> => {
+      if (typeof window === "undefined") return []
       const supabase = getSupabaseBrowser()
       const { data, error } = await supabase
         .from("long_terms")
@@ -51,13 +52,13 @@ export default function LongTermPage() {
       if (error) throw error
       return data || []
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   const { data: cycles } = useQuery({
     queryKey: ["cycles", longTerms?.[0]?.id],
     queryFn: async (): Promise<Cycle[]> => {
-      if (!longTerms?.[0]?.id) return []
+      if (!longTerms?.[0]?.id || typeof window === "undefined") return []
 
       const supabase = getSupabaseBrowser()
       const { data, error } = await supabase
@@ -69,7 +70,7 @@ export default function LongTermPage() {
       if (error) throw error
       return data || []
     },
-    enabled: !!longTerms?.[0]?.id,
+    enabled: !!longTerms?.[0]?.id && typeof window !== "undefined",
   })
 
   if (authLoading) {
