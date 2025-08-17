@@ -14,6 +14,8 @@ import { toast } from "sonner"
 import { Plus, FolderOpen } from "lucide-react"
 import { useRequireAuth } from "@/hooks/use-require-auth"
 
+export const dynamic = "force-dynamic"
+
 interface Category {
   id: string
   name: string
@@ -25,8 +27,6 @@ interface CategoriesData {
   parents: Category[]
   children: Record<string, Category[]>
 }
-
-export const dynamic = "force-dynamic"
 
 export default function CategoriesPage() {
   const router = useRouter()
