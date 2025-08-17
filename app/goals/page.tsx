@@ -312,13 +312,17 @@ function GoalCard({
     }
   }
 
+  // Safely handle description - ensure it's always a string
+  const safeDescription =
+    typeof goal.description === "string" ? goal.description : goal.description ? String(goal.description) : null
+
   return (
     <Card className="rounded-2xl shadow-sm hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <CardTitle className="text-lg font-semibold text-ink truncate">{goal.title}</CardTitle>
+              <CardTitle className="text-lg font-semibold text-ink truncate">{String(goal.title)}</CardTitle>
               {typeBadge}
             </div>
             <div className="mt-2 flex items-center gap-2 flex-wrap">
@@ -327,7 +331,7 @@ function GoalCard({
               </Badge>
               {statusBadge}
             </div>
-            <div className="mt-1 text-xs text-ink/70">{categoryPath}</div>
+            <div className="mt-1 text-xs text-ink/70">{String(categoryPath)}</div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -345,7 +349,7 @@ function GoalCard({
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {goal.description && <div className="text-sm text-ink/80 mb-3 line-clamp-2">{goal.description}</div>}
+        {safeDescription && <div className="text-sm text-ink/80 mb-3 line-clamp-2">{safeDescription}</div>}
         {secondary && <div className="text-xs text-ink/70 font-medium">{secondary}</div>}
         {goal.effort_estimate_hours && (
           <div className="text-xs text-ink/70 mt-1">Est. {goal.effort_estimate_hours}h effort</div>

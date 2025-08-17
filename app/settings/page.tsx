@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getSupabaseBrowser } from "@/lib/supabase-browser"
 import { useRequireAuth } from "@/hooks/use-require-auth"
@@ -53,20 +53,22 @@ export default function SettingsPage() {
       return data
     },
     enabled: !!user && typeof window !== "undefined",
-    onSuccess: (data) => {
-      if (data) {
-        setFormData({
-          long_term_months: data.long_term_months,
-          cycle_days: data.cycle_days,
-          highlight_points: data.highlight_points,
-          habit_min: data.habit_min,
-          habit_max: data.habit_max,
-          extra_points: data.extra_points,
-          difficulty_scaling: data.difficulty_scaling,
-        })
-      }
-    },
   })
+
+  // Update form data when settings are loaded
+  useEffect(() => {
+    if (settings) {
+      setFormData({
+        long_term_months: settings.long_term_months,
+        cycle_days: settings.cycle_days,
+        highlight_points: settings.highlight_points,
+        habit_min: settings.habit_min,
+        habit_max: settings.habit_max,
+        extra_points: settings.extra_points,
+        difficulty_scaling: settings.difficulty_scaling,
+      })
+    }
+  }, [settings])
 
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
