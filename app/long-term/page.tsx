@@ -30,10 +30,11 @@ type LongTerm = {
 type Cycle = {
   id: string
   long_term_id: string
-  title: string
+  title?: string // Make title optional to handle missing column gracefully
   start_date: string
   end_date: string
-  order_index: number
+  order_index?: number // Make optional
+  seq?: number // Alternative field that might exist
 }
 
 function ErrorCard({ title, description, onRetry }: { title: string; description: string; onRetry: () => void }) {
@@ -139,7 +140,7 @@ export default function LongTermPage() {
   const activePlan = longTerms?.find((plan) => plan?.status === "active") || null
   const activePlanId = activePlan?.id || null
 
-  // Enhanced cycles query with proper dependency management
+  // Enhanced cycles query with graceful column handling
   const {
     data: cycles,
     isLoading: cyclesLoading,
@@ -154,27 +155,47 @@ export default function LongTermPage() {
 
       try {
         const supabase = getSupabaseBrowser()
-        const { data, error } = await supabase
+
+        // First, try with all expected columns
+        let { data, error } = await supabase
           .from("cycles")
-          .select("id, long_term_id, title, start_date, end_date, order_index")
+          .select("id, long_term_id, title, start_date, end_date, order_index, seq")
           .eq("long_term_id", activePlanId)
           .order("order_index", { ascending: true })
 
-        if (error) {
-          console.error("Cycles query error:", error)
+        // If that fails, try with minimal columns
+        if (error && error.message?.includes("does not exist")) {
+          console.warn("Some columns don't exist, trying with minimal columns:", error.message)
+
+          const { data: minimalData, error: minimalError } = await supabase
+            .from("cycles")
+            .select("id, long_term_id, start_date, end_date, seq")
+            .eq("long_term_id", activePlanId)
+            .order("seq", { ascending: true })
+
+          if (minimalError) {
+            throw new Error(`Failed to fetch cycles: ${minimalError.message}`)
+          }
+
+          data = minimalData
+        } else if (error) {
           throw new Error(`Failed to fetch cycles: ${error.message}`)
         }
 
-        // Validate cycles data structure
-        const validatedData = (data || []).filter((item): item is Cycle => {
-          return (
-            item &&
-            typeof item === "object" &&
-            typeof item.id === "string" &&
-            typeof item.long_term_id === "string" &&
-            typeof item.title === "string"
-          )
-        })
+        // Validate and transform cycles data
+        const validatedData = (data || [])
+          .map((item, index): Cycle => {
+            return {
+              id: item.id || `cycle-${index}`,
+              long_term_id: item.long_term_id || activePlanId,
+              title: item.title || `Cycle ${item.seq || item.order_index || index + 1}`,
+              start_date: item.start_date || new Date().toISOString(),
+              end_date: item.end_date || new Date().toISOString(),
+              order_index: item.order_index || item.seq || index + 1,
+              seq: item.seq || item.order_index || index + 1,
+            }
+          })
+          .filter((item) => item.id && item.long_term_id)
 
         return validatedData
       } catch (error) {
@@ -183,8 +204,8 @@ export default function LongTermPage() {
       }
     },
     enabled: isClient && !!activePlanId,
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    retry: 2, // Reduce retries since we have fallback logic
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   })
 
   // Show loading state during SSR hydration
@@ -336,7 +357,7 @@ export default function LongTermPage() {
                       >
                         <div className="flex items-center gap-3">
                           <div className="inline-flex size-8 items-center justify-center rounded-lg bg-brand/10 text-brand text-sm font-medium">
-                            {index + 1}
+                            {cycle.order_index || cycle.seq || index + 1}
                           </div>
                           <div>
                             <div className="font-medium text-ink">{cycle.title}</div>

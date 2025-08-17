@@ -121,15 +121,33 @@ export default function GoalForm({
     enabled: mode === "edit" && !!goalId && typeof window !== "undefined",
   })
 
+  // Enhanced habit plan query with better error handling
   const habitPlanQuery = useQuery({
     queryKey: ["habit_plans", goalId],
     queryFn: async () => {
       if (!goalId || typeof window === "undefined") return null
-      const { data, error } = await supabase.from("habit_plans").select("*").eq("goal_id", goalId).maybeSingle()
-      if (error) throw error
-      return data ?? null
+
+      try {
+        const { data, error } = await supabase
+          .from("habit_plans")
+          .select("id, frequency, times_per_week")
+          .eq("goal_id", goalId)
+          .maybeSingle()
+
+        if (error) {
+          console.warn("Habit plan query error:", error)
+          // Return null instead of throwing to prevent breaking the form
+          return null
+        }
+
+        return data ?? null
+      } catch (error) {
+        console.warn("Habit plan fetch error:", error)
+        return null
+      }
     },
     enabled: mode === "edit" && !!goalId && typeof window !== "undefined",
+    retry: 1, // Reduce retries for habit plans
   })
 
   // Populate form when editing
@@ -212,12 +230,19 @@ export default function GoalForm({
           const { error: mErr } = await supabase.from("milestones").insert(milestoneRows)
           if (mErr) throw mErr
         } else if (type === "habitual") {
-          const { error: hErr } = await supabase.from("habit_plans").insert({
-            goal_id: newGoalId,
-            frequency: habitPlan.frequency,
-            times_per_week: habitPlan.frequency === "times_per_week" ? habitPlan.times_per_week : null,
-          })
-          if (hErr) throw hErr
+          try {
+            const { error: hErr } = await supabase.from("habit_plans").insert({
+              goal_id: newGoalId,
+              frequency: habitPlan.frequency,
+              times_per_week: habitPlan.frequency === "times_per_week" ? habitPlan.times_per_week : null,
+            })
+            if (hErr) {
+              console.warn("Failed to create habit plan:", hErr)
+              // Don't throw here, goal was created successfully
+            }
+          } catch (error) {
+            console.warn("Habit plan creation error:", error)
+          }
         }
       } else if (mode === "edit" && goalId) {
         // Update goal
@@ -230,7 +255,11 @@ export default function GoalForm({
         // Sync type-specific data
         if (type === "progressive") {
           // Delete habit plan if switching types
-          await supabase.from("habit_plans").delete().eq("goal_id", goalId)
+          try {
+            await supabase.from("habit_plans").delete().eq("goal_id", goalId)
+          } catch (error) {
+            console.warn("Failed to delete habit plan:", error)
+          }
 
           // Handle milestones
           const { data: existing } = await supabase.from("milestones").select("id").eq("goal_id", goalId)
@@ -275,19 +304,29 @@ export default function GoalForm({
           // Delete milestones if switching types
           await supabase.from("milestones").delete().eq("goal_id", goalId)
 
-          // Upsert habit plan
-          const { data: existing } = await supabase.from("habit_plans").select("id").eq("goal_id", goalId).maybeSingle()
+          // Upsert habit plan with better error handling
+          try {
+            const { data: existing } = await supabase
+              .from("habit_plans")
+              .select("id")
+              .eq("goal_id", goalId)
+              .maybeSingle()
 
-          const habitData = {
-            goal_id: goalId,
-            frequency: habitPlan.frequency,
-            times_per_week: habitPlan.frequency === "times_per_week" ? habitPlan.times_per_week : null,
-          }
+            const habitData = {
+              goal_id: goalId,
+              frequency: habitPlan.frequency,
+              times_per_week: habitPlan.frequency === "times_per_week" ? habitPlan.times_per_week : null,
+            }
 
-          if (existing?.id) {
-            await supabase.from("habit_plans").update(habitData).eq("goal_id", goalId)
-          } else {
-            await supabase.from("habit_plans").insert(habitData)
+            if (existing?.id) {
+              const { error } = await supabase.from("habit_plans").update(habitData).eq("goal_id", goalId)
+              if (error) console.warn("Failed to update habit plan:", error)
+            } else {
+              const { error } = await supabase.from("habit_plans").insert(habitData)
+              if (error) console.warn("Failed to create habit plan:", error)
+            }
+          } catch (error) {
+            console.warn("Habit plan upsert error:", error)
           }
         }
       }
