@@ -49,33 +49,33 @@ function tintClasses(type: MissionType) {
   switch (type) {
     case "highlight":
       return {
-        bgSoft: "bg-amber-50",
-        bgSofter: "bg-amber-100/70",
-        fg: "text-amber-800",
-        chip: "bg-amber-100 text-amber-800",
-        button: "bg-amber-600 hover:bg-amber-700 text-white",
-        ring: "ring-amber-300",
-        subtle: "text-amber-700",
+        bgSoft: "bg-amber-100/80",
+        bgSofter: "bg-amber-200/70",
+        fg: "text-amber-900",
+        chip: "bg-amber-200 text-amber-900",
+        button: "bg-amber-700 hover:bg-amber-800 text-white",
+        ring: "ring-amber-400",
+        subtle: "text-amber-800",
       }
     case "habit":
       return {
-        bgSoft: "bg-emerald-50",
-        bgSofter: "bg-emerald-100/70",
-        fg: "text-emerald-800",
-        chip: "bg-emerald-100 text-emerald-800",
-        button: "bg-emerald-600 hover:bg-emerald-700 text-white",
-        ring: "ring-emerald-300",
-        subtle: "text-emerald-700",
+        bgSoft: "bg-emerald-100/80",
+        bgSofter: "bg-emerald-200/70",
+        fg: "text-emerald-900",
+        chip: "bg-emerald-200 text-emerald-900",
+        button: "bg-emerald-700 hover:bg-emerald-800 text-white",
+        ring: "ring-emerald-400",
+        subtle: "text-emerald-800",
       }
     case "extra":
       return {
-        bgSoft: "bg-indigo-50",
-        bgSofter: "bg-indigo-100/70",
-        fg: "text-indigo-800",
-        chip: "bg-indigo-100 text-indigo-800",
-        button: "bg-indigo-600 hover:bg-indigo-700 text-white",
-        ring: "ring-indigo-300",
-        subtle: "text-indigo-700",
+        bgSoft: "bg-indigo-100/80",
+        bgSofter: "bg-indigo-200/70",
+        fg: "text-indigo-900",
+        chip: "bg-indigo-200 text-indigo-900",
+        button: "bg-indigo-700 hover:bg-indigo-800 text-white",
+        ring: "ring-indigo-400",
+        subtle: "text-indigo-800",
       }
   }
 }
@@ -84,7 +84,7 @@ export default function MissionsPage() {
   const today = useMemo(() => formatLocalYMD(), [])
   return (
     <main
-      className={cn(`${inter.variable} ${dmSerif.variable}`, "min-h-dvh bg-gradient-to-b from-emerald-50/50 to-white")}
+      className={cn(`${inter.variable} ${dmSerif.variable}`, "min-h-dvh bg-gradient-to-b from-emerald-100/60 to-white")}
     >
       <div className="container mx-auto px-4 py-6 md:py-10">
         <Header today={today} />
@@ -99,11 +99,11 @@ function Header({ today }: { today: string }) {
     <div className="mb-6 md:mb-8">
       <div className="flex items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-sm">
+          <div className="inline-flex size-10 items-center justify-center rounded-2xl bg-emerald-200 text-emerald-800 shadow-sm">
             <Target className="size-5" />
           </div>
           <h1 className={cn("text-2xl sm:text-3xl tracking-tight", "font-serif", dmSerif.className)}>
-            {"Today’s Missions"}
+            {"Today's Missions"}
           </h1>
         </div>
         <div className="text-sm text-muted-foreground">{today}</div>
@@ -320,7 +320,7 @@ function MissionsDashboard({ today }: { today: string }) {
         <Card className="rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <div className="inline-flex size-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+              <div className="inline-flex size-9 items-center justify-center rounded-xl bg-emerald-200 text-emerald-800">
                 <CheckCircle2 className="size-5" />
               </div>
               <CardTitle className="text-lg font-semibold">Habit Missions</CardTitle>
@@ -351,13 +351,13 @@ function MissionsDashboard({ today }: { today: string }) {
         <Card className="rounded-2xl shadow-sm">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <div className="inline-flex size-9 items-center justify-center rounded-xl bg-indigo-100 text-indigo-700">
+              <div className="inline-flex size-9 items-center justify-center rounded-xl bg-indigo-200 text-indigo-800">
                 <Sparkles className="size-5" />
               </div>
               <CardTitle className="text-lg font-semibold">Extra Missions</CardTitle>
             </div>
             {!highlightCompleted && (
-              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3 py-1 text-xs text-indigo-700">
+              <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-indigo-100 px-3 py-1 text-xs text-indigo-800">
                 <Info className="size-4" />
                 Unlock by finishing Highlight
               </div>
@@ -525,7 +525,7 @@ function EmptyInline({
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="text-sm text-muted-foreground">{message}</div>
       <div>
-        <Button className="rounded-full bg-amber-600 hover:bg-amber-700 text-white" onClick={onCta} disabled={loading}>
+        <Button className="rounded-full bg-amber-700 hover:bg-amber-800 text-white" onClick={onCta} disabled={loading}>
           {ctaLabel}
         </Button>
       </div>

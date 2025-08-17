@@ -14,7 +14,7 @@ export default function Page() {
   return (
     <div className={`${inter.variable} ${dmSerif.variable} font-sans`}>
       <QueryProvider>
-        <main className="min-h-dvh bg-gradient-to-b from-emerald-50 to-white">
+        <main className="min-h-dvh bg-gradient-to-b from-emerald-100/60 to-white">
           <div className="container mx-auto px-4 py-6 md:py-10 grid gap-6 md:gap-8">
             <section aria-label="Level and Points">
               <Suspense

@@ -28,11 +28,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }
         `}</style>
       </head>
-      {/* light sand backdrop, ink text by default */}
-      <body className="min-h-screen bg-sand/20 text-ink antialiased">
+      {/* darker sand backdrop, darker ink text by default */}
+      <body className="min-h-screen bg-sand/30 text-ink antialiased">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <QueryProvider>
-            {/* top border accent using brand; subtle */}
+            {/* top border accent using brand; more visible */}
             <div className="h-1 w-full bg-brand" />
             <Header />
             <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
