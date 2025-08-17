@@ -45,13 +45,14 @@ export default function SettingsPage() {
   const { data: settings, isLoading } = useQuery({
     queryKey: ["user-settings", user?.id],
     queryFn: async (): Promise<UserSettings | null> => {
+      if (typeof window === "undefined") return null
       const supabase = getSupabaseBrowser()
       const { data, error } = await supabase.from("user_settings").select("*").eq("user_id", user!.id).maybeSingle()
 
       if (error && error.code !== "PGRST116") throw error
       return data
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
     onSuccess: (data) => {
       if (data) {
         setFormData({

@@ -34,6 +34,7 @@ export default function ProgressPage() {
   const { data: pointsHistory, isLoading: pointsLoading } = useQuery({
     queryKey: ["points-history", user?.id],
     queryFn: async (): Promise<PointsEntry[]> => {
+      if (typeof window === "undefined") return []
       const supabase = getSupabaseBrowser()
       const { data, error } = await supabase
         .from("points_ledger")
@@ -45,12 +46,21 @@ export default function ProgressPage() {
       if (error) throw error
       return data || []
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   const { data: stats } = useQuery({
     queryKey: ["user-stats", user?.id],
     queryFn: async (): Promise<UserStats> => {
+      if (typeof window === "undefined")
+        return {
+          total_points: 0,
+          current_level: 1,
+          missions_completed_today: 0,
+          goals_completed: 0,
+          current_streak: 0,
+        }
+
       const supabase = getSupabaseBrowser()
 
       // Get total points
@@ -83,7 +93,7 @@ export default function ProgressPage() {
         current_streak: 0, // TODO: Calculate streak
       }
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   if (authLoading) {

@@ -76,10 +76,12 @@ export default function GoalForm({
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: async (): Promise<Category[]> => {
+      if (typeof window === "undefined") return []
       const { data, error } = await supabase.from("categories").select("id,user_id,name,parent_id").order("name")
       if (error) throw error
       return (data as Category[]) ?? []
     },
+    enabled: typeof window !== "undefined",
   })
 
   const parents = useMemo(
@@ -96,18 +98,18 @@ export default function GoalForm({
   const goalQuery = useQuery({
     queryKey: ["goals", goalId],
     queryFn: async (): Promise<Goal | null> => {
-      if (!goalId) return null
+      if (!goalId || typeof window === "undefined") return null
       const { data, error } = await supabase.from("goals").select("*").eq("id", goalId).maybeSingle()
       if (error) throw error
       return (data as Goal) ?? null
     },
-    enabled: mode === "edit" && !!goalId,
+    enabled: mode === "edit" && !!goalId && typeof window !== "undefined",
   })
 
   const milestonesQuery = useQuery({
     queryKey: ["milestones", goalId],
     queryFn: async () => {
-      if (!goalId) return []
+      if (!goalId || typeof window === "undefined") return []
       const { data, error } = await supabase
         .from("milestones")
         .select("id,title,target_date,order_index")
@@ -116,18 +118,18 @@ export default function GoalForm({
       if (error) throw error
       return data ?? []
     },
-    enabled: mode === "edit" && !!goalId,
+    enabled: mode === "edit" && !!goalId && typeof window !== "undefined",
   })
 
   const habitPlanQuery = useQuery({
     queryKey: ["habit_plans", goalId],
     queryFn: async () => {
-      if (!goalId) return null
+      if (!goalId || typeof window === "undefined") return null
       const { data, error } = await supabase.from("habit_plans").select("*").eq("goal_id", goalId).maybeSingle()
       if (error) throw error
       return data ?? null
     },
-    enabled: mode === "edit" && !!goalId,
+    enabled: mode === "edit" && !!goalId && typeof window !== "undefined",
   })
 
   // Populate form when editing

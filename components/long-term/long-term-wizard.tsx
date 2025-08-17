@@ -49,6 +49,7 @@ export function LongTermWizard({ onClose }: { onClose: () => void }) {
   const { data: goals } = useQuery({
     queryKey: ["goals", user?.id],
     queryFn: async (): Promise<Goal[]> => {
+      if (typeof window === "undefined") return []
       const supabase = getSupabaseBrowser()
       const { data, error } = await supabase
         .from("goals")
@@ -60,7 +61,7 @@ export function LongTermWizard({ onClose }: { onClose: () => void }) {
       if (error) throw error
       return data || []
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   const createPlanMutation = useMutation({
