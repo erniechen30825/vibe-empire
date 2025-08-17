@@ -34,6 +34,8 @@ const defaultSettings: Omit<UserSettings, "user_id"> = {
   difficulty_scaling: false,
 }
 
+export const dynamic = "force-dynamic"
+
 export default function SettingsPage() {
   const { user, loading: authLoading } = useRequireAuth()
   const queryClient = useQueryClient()
