@@ -44,6 +44,7 @@ export default function CategoriesPage() {
   } = useQuery({
     queryKey: ["categories"],
     queryFn: async (): Promise<CategoriesData> => {
+      if (typeof window === "undefined") return { parents: [], children: {} }
       const supabase = getSupabaseBrowser()
       const { data, error } = await supabase
         .from("categories")
@@ -66,7 +67,7 @@ export default function CategoriesPage() {
 
       return { parents, children }
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   // Delete mutation
