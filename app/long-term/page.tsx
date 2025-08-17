@@ -13,6 +13,8 @@ import { LongTermWizard } from "@/components/long-term/long-term-wizard"
 import { Calendar, Target, Clock } from "lucide-react"
 import { format } from "date-fns"
 
+export const dynamic = "force-dynamic"
+
 type LongTerm = {
   id: string
   user_id: string

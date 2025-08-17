@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
 import { Star, CheckCircle2, Target, Sparkles, Info } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 type MissionType = "highlight" | "habit" | "extra"
 
 type Mission = {

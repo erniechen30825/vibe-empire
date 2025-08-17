@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { toast } from "sonner"
 
+export const dynamic = "force-dynamic"
+
 export default function LoginPage() {
   const supabase = getSupabaseBrowser()
   const router = useRouter()

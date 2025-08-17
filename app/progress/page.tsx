@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { TrendingUp, Award, Calendar } from "lucide-react"
 import { format } from "date-fns"
 
+export const dynamic = "force-dynamic"
+
 type PointsEntry = {
   id: string
   points: number
@@ -25,8 +27,6 @@ type UserStats = {
   goals_completed: number
   current_streak: number
 }
-
-export const dynamic = "force-dynamic"
 
 export default function ProgressPage() {
   const { user, loading: authLoading } = useRequireAuth()
