@@ -1,4 +1,5 @@
-"use client"
+export const dynamic = "force-dynamic"
+;("use client")
 
 import { useMemo, useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -15,8 +16,6 @@ import { toast } from "sonner"
 import { MoreVertical, Target, CheckCircle2 } from "lucide-react"
 import GoalForm from "@/components/goals/goal-form"
 import { useRequireAuth } from "@/hooks/use-require-auth"
-
-export const dynamic = "force-dynamic"
 
 type Goal = {
   id: string
@@ -51,6 +50,7 @@ export default function GoalsPage() {
   const goalsQuery = useQuery({
     queryKey: ["goals"],
     queryFn: async (): Promise<Goal[]> => {
+      if (typeof window === "undefined") return []
       const { data, error } = await supabase
         .from("goals")
         .select(
@@ -60,12 +60,13 @@ export default function GoalsPage() {
       if (error) throw error
       return (data as Goal[]) ?? []
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   const categoriesQuery = useQuery({
     queryKey: ["categories"],
     queryFn: async (): Promise<Category[]> => {
+      if (typeof window === "undefined") return []
       const { data, error } = await supabase
         .from("categories")
         .select("id,user_id,name,parent_id")
@@ -73,7 +74,7 @@ export default function GoalsPage() {
       if (error) throw error
       return (data as Category[]) ?? []
     },
-    enabled: !!user,
+    enabled: !!user && typeof window !== "undefined",
   })
 
   const markCompleted = useMutation({
@@ -245,6 +246,7 @@ function GoalCard({
   const { data: milestones } = useQuery({
     queryKey: ["milestones", goal.id],
     queryFn: async () => {
+      if (typeof window === "undefined") return []
       const { data, error } = await supabase
         .from("milestones")
         .select("id,title,target_date,order_index,is_completed")
@@ -253,13 +255,14 @@ function GoalCard({
       if (error) throw error
       return data ?? []
     },
-    enabled: goal.type === "progressive",
+    enabled: goal.type === "progressive" && typeof window !== "undefined",
   })
 
   // Habitual: habit plan
   const { data: habitPlan } = useQuery({
     queryKey: ["habit_plans", goal.id],
     queryFn: async () => {
+      if (typeof window === "undefined") return null
       const { data, error } = await supabase
         .from("habit_plans")
         .select("id,frequency,times_per_week")
@@ -268,7 +271,7 @@ function GoalCard({
       if (error) throw error
       return data ?? null
     },
-    enabled: goal.type === "habitual",
+    enabled: goal.type === "habitual" && typeof window !== "undefined",
   })
 
   const typeBadge =
