@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { getSupabaseBrowser } from "@/lib/supabase-browser"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -13,10 +14,16 @@ interface CycleProgressProps {
 }
 
 export function CycleProgress({ longTermId }: CycleProgressProps) {
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
   const { data: cycles, error } = useQuery({
     queryKey: ["cycle-progress", longTermId],
     queryFn: async () => {
-      if (!longTermId || typeof window === "undefined") {
+      if (!isClient || !longTermId) {
         return []
       }
 
@@ -51,7 +58,7 @@ export function CycleProgress({ longTermId }: CycleProgressProps) {
         throw error
       }
     },
-    enabled: !!longTermId && typeof window !== "undefined",
+    enabled: isClient && !!longTermId,
     retry: 2,
   })
 
@@ -69,6 +76,19 @@ export function CycleProgress({ longTermId }: CycleProgressProps) {
         return false
       }
     })
+  }
+
+  if (!isClient) {
+    return (
+      <Card className="rounded-2xl border-ink/10">
+        <CardContent className="p-6 text-center text-ink/60">
+          <div className="animate-pulse">
+            <div className="h-4 bg-ink/10 rounded w-3/4 mx-auto mb-2"></div>
+            <div className="h-4 bg-ink/10 rounded w-1/2 mx-auto"></div>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   if (error) {

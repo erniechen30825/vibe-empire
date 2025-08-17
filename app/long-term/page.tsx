@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { getSupabaseBrowser } from "@/lib/supabase-browser"
 import { useRequireAuth } from "@/hooks/use-require-auth"
@@ -14,6 +14,7 @@ import { CycleProgress } from "@/components/long-term/cycle-progress"
 import { Calendar, Target, Clock, AlertCircle } from "lucide-react"
 import { format } from "date-fns"
 
+// Force dynamic rendering to prevent SSR issues
 export const dynamic = "force-dynamic"
 
 type LongTerm = {
@@ -78,6 +79,12 @@ function LoadingState() {
 export default function LongTermPage() {
   const { user, loading: authLoading } = useRequireAuth()
   const [showWizard, setShowWizard] = useState(false)
+  const [isClient, setIsClient] = useState(false)
+
+  // Ensure we're on the client side before running queries
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Enhanced long-terms query with better error handling
   const {
@@ -88,11 +95,8 @@ export default function LongTermPage() {
   } = useQuery({
     queryKey: ["long-terms", user?.id],
     queryFn: async (): Promise<LongTerm[]> => {
-      if (!user?.id) {
-        throw new Error("User not authenticated")
-      }
-
-      if (typeof window === "undefined") {
+      // Prevent execution during SSR or when user is not available
+      if (!isClient || !user?.id) {
         return []
       }
 
@@ -126,7 +130,7 @@ export default function LongTermPage() {
         throw error
       }
     },
-    enabled: !!user?.id && typeof window !== "undefined",
+    enabled: isClient && !!user?.id,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
@@ -144,11 +148,7 @@ export default function LongTermPage() {
   } = useQuery({
     queryKey: ["cycles", activePlanId],
     queryFn: async (): Promise<Cycle[]> => {
-      if (!activePlanId) {
-        return []
-      }
-
-      if (typeof window === "undefined") {
+      if (!isClient || !activePlanId) {
         return []
       }
 
@@ -182,10 +182,24 @@ export default function LongTermPage() {
         throw error
       }
     },
-    enabled: !!activePlanId && typeof window !== "undefined",
+    enabled: isClient && !!activePlanId,
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   })
+
+  // Show loading state during SSR hydration
+  if (!isClient) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center min-h-[200px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand mx-auto mb-4"></div>
+            <p className="text-ink/60">Loading...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Loading states
   if (authLoading) {

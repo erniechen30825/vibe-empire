@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getSupabaseBrowser } from "@/lib/supabase-browser"
 import { useRequireAuth } from "@/hooks/use-require-auth"
@@ -36,6 +36,11 @@ export function LongTermWizard({ onClose }: { onClose: () => void }) {
   const [selectedGoals, setSelectedGoals] = useState<Set<string>>(new Set())
   const [cycleGoals, setCycleGoals] = useState<Record<string, CycleGoal>>({})
   const [error, setError] = useState<string | null>(null)
+  const [isClient, setIsClient] = useState(false)
+
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
   // Calculate default dates (3 months from next Monday)
   const nextMonday = startOfWeek(addWeeks(new Date(), 1), { weekStartsOn: 1 })
@@ -52,7 +57,7 @@ export function LongTermWizard({ onClose }: { onClose: () => void }) {
   const { data: goals, error: goalsError } = useQuery({
     queryKey: ["goals", user?.id],
     queryFn: async (): Promise<Goal[]> => {
-      if (!user?.id || typeof window === "undefined") {
+      if (!isClient || !user?.id) {
         return []
       }
 
@@ -87,7 +92,7 @@ export function LongTermWizard({ onClose }: { onClose: () => void }) {
         throw error
       }
     },
-    enabled: !!user?.id && typeof window !== "undefined",
+    enabled: isClient && !!user?.id,
     retry: 2,
   })
 
@@ -225,6 +230,19 @@ export function LongTermWizard({ onClose }: { onClose: () => void }) {
         [field]: value,
       },
     }))
+  }
+
+  if (!isClient) {
+    return (
+      <div className="space-y-6">
+        <div className="animate-pulse">
+          <div className="h-6 bg-ink/10 rounded w-1/2 mb-4"></div>
+          <div className="h-4 bg-ink/10 rounded w-3/4 mb-6"></div>
+          <div className="h-10 bg-ink/10 rounded mb-4"></div>
+          <div className="h-20 bg-ink/10 rounded"></div>
+        </div>
+      </div>
+    )
   }
 
   // Error handling for goals loading
